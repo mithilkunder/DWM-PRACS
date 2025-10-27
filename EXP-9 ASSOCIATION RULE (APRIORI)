@@ -1,0 +1,44 @@
+# Association Rule Mining using Apriori Algorithm
+
+# Step 1: Import libraries
+import pandas as pd
+from mlxtend.frequent_patterns import apriori, association_rules
+from mlxtend.preprocessing import TransactionEncoder
+import warnings
+
+# Suppress harmless RuntimeWarnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+# Step 2: Create or load a sample dataset (transactions)
+dataset = [
+    ['milk', 'bread', 'nuts', 'apple'],
+    ['milk', 'bread', 'apple'],
+    ['milk', 'bread'],
+    ['milk', 'apple'],
+    ['milk', 'bread', 'apple', 'nuts']
+]
+
+# Step 3: Convert dataset into one-hot encoded DataFrame
+te = TransactionEncoder()
+te_ary = te.fit(dataset).transform(dataset)
+df = pd.DataFrame(te_ary, columns=te.columns_)
+
+print("One-hot encoded data:\n")
+print(df)
+
+# Step 4: Apply Apriori algorithm to find frequent itemsets
+frequent_itemsets = apriori(df, min_support=0.6, use_colnames=True)
+print("\nFrequent Itemsets:\n")
+print(frequent_itemsets)
+
+# Step 5: Generate Association Rules
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.0)
+rules = rules.dropna()  # Removes invalid/NaN rules if any
+
+print("\nAssociation Rules:\n")
+print(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']])
+
+
+# Commands for installing libraries
+
+pip install mlxtend
