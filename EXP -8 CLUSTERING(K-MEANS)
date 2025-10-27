@@ -31,3 +31,11 @@ plt.xlabel("Feature 1")
 plt.ylabel("Feature 2")
 plt.legend()
 plt.show()
+
+
+
+# Commands to download library
+pip install numpy
+pip install matplotlib
+pip install scikit-learn
+
