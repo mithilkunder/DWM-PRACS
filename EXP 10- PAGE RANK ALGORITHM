@@ -1,0 +1,30 @@
+# PageRank Algorithm Implementation (From Scratch)
+
+import numpy as np
+
+# Step 1: Define the link structure (Adjacency Matrix)
+# Example: 4 pages A, B, C, D
+links = np.array([
+    [0, 1, 1, 0],  # A links to B and C
+    [0, 0, 1, 0],  # B links to C
+    [1, 0, 0, 1],  # C links to A and D
+    [0, 0, 1, 0]   # D links to C
+], dtype=float)
+
+# Step 2: Normalize the matrix so that each column sums to 1
+column_sums = np.sum(links, axis=0)
+links /= column_sums
+
+# Step 3: Initialize parameters
+n = links.shape[0]
+damping_factor = 0.85
+ranks = np.ones(n) / n  # initial rank (equal for all pages)
+
+# Step 4: Power iteration method
+for i in range(100):  # iterate 100 times
+    ranks = (1 - damping_factor) / n + damping_factor * links.dot(ranks)
+
+# Step 5: Display the final PageRank values
+pages = ['A', 'B', 'C', 'D']
+for page, rank in zip(pages, ranks):
+    print(f"Page {page}: {rank:.4f}")
