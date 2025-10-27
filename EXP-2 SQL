@@ -1,0 +1,124 @@
+-- =====================================
+-- 1️⃣ CREATE DATABASE AND USE IT
+-- =====================================
+CREATE DATABASE SalesDW;
+USE SalesDW;
+
+-- =====================================
+-- 2️⃣ CREATE DIMENSION TABLES
+-- =====================================
+
+CREATE TABLE Time_Dim (
+    TimeID INT PRIMARY KEY,
+    Year INT,
+    Quarter VARCHAR(10)
+);
+
+CREATE TABLE Product_Dim (
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(50),
+    Category VARCHAR(50)
+);
+
+CREATE TABLE Location_Dim (
+    LocationID INT PRIMARY KEY,
+    City VARCHAR(50),
+    Region VARCHAR(50)
+);
+
+-- =====================================
+-- 3️⃣ CREATE FACT TABLE
+-- =====================================
+CREATE TABLE Sales_Fact (
+    SalesID INT AUTO_INCREMENT PRIMARY KEY,
+    TimeID INT,
+    ProductID INT,
+    LocationID INT,
+    SalesAmount DECIMAL(10,2),
+    FOREIGN KEY (TimeID) REFERENCES Time_Dim(TimeID),
+    FOREIGN KEY (ProductID) REFERENCES Product_Dim(ProductID),
+    FOREIGN KEY (LocationID) REFERENCES Location_Dim(LocationID)
+);
+
+-- =====================================
+-- 4️⃣ INSERT DATA INTO DIMENSION TABLES
+-- =====================================
+
+INSERT INTO Time_Dim VALUES
+(1, 2023, 'Q1'),
+(2, 2023, 'Q2'),
+(3, 2024, 'Q1'),
+(4, 2024, 'Q2');
+
+INSERT INTO Product_Dim VALUES
+(101, 'Laptop', 'Electronics'),
+(102, 'Mobile', 'Electronics'),
+(103, 'Tablet', 'Electronics');
+
+INSERT INTO Location_Dim VALUES
+(11, 'Mumbai', 'West'),
+(12, 'Delhi', 'North'),
+(13, 'Bangalore', 'South');
+
+-- =====================================
+-- 5️⃣ INSERT DATA INTO FACT TABLE
+-- =====================================
+
+INSERT INTO Sales_Fact (TimeID, ProductID, LocationID, SalesAmount) VALUES
+(1, 101, 11, 20000),
+(1, 102, 12, 15000),
+(2, 101, 13, 18000),
+(2, 103, 11, 12000),
+(3, 102, 12, 22000),
+(3, 103, 13, 25000),
+(4, 101, 11, 24000),
+(4, 102, 12, 30000);
+
+-- =====================================
+-- 6️⃣ OLAP OPERATIONS
+-- =====================================
+
+-- 🔹 SLICE: Sales data for Year = 2024
+SELECT f.SalesAmount, t.Year, t.Quarter, p.ProductName, l.City
+FROM Sales_Fact f
+JOIN Time_Dim t ON f.TimeID = t.TimeID
+JOIN Product_Dim p ON f.ProductID = p.ProductID
+JOIN Location_Dim l ON f.LocationID = l.LocationID
+WHERE t.Year = 2024;
+
+-- 🔹 DICE: Year = 2024 AND Region = 'South'
+SELECT f.SalesAmount, t.Year, p.ProductName, l.City, l.Region
+FROM Sales_Fact f
+JOIN Time_Dim t ON f.TimeID = t.TimeID
+JOIN Product_Dim p ON f.ProductID = p.ProductID
+JOIN Location_Dim l ON f.LocationID = l.LocationID
+WHERE t.Year = 2024 AND l.Region = 'South';
+
+-- 🔹 ROLLUP: Total Sales per Year
+SELECT t.Year, SUM(f.SalesAmount) AS Total_Sales
+FROM Sales_Fact f
+JOIN Time_Dim t ON f.TimeID = t.TimeID
+GROUP BY t.Year WITH ROLLUP;
+
+-- 🔹 DRILLDOWN: Total Sales by Year and Quarter
+SELECT t.Year, t.Quarter, SUM(f.SalesAmount) AS Total_Sales
+FROM Sales_Fact f
+JOIN Time_Dim t ON f.TimeID = t.TimeID
+GROUP BY t.Year, t.Quarter
+ORDER BY t.Year, t.Quarter;
+
+-- 🔹 PIVOT: Sales by Year and City
+SELECT 
+    t.Year,
+    SUM(CASE WHEN l.City = 'Mumbai' THEN f.SalesAmount ELSE 0 END) AS Mumbai_Sales,
+    SUM(CASE WHEN l.City = 'Delhi' THEN f.SalesAmount ELSE 0 END) AS Delhi_Sales,
+    SUM(CASE WHEN l.City = 'Bangalore' THEN f.SalesAmount ELSE 0 END) AS Bangalore_Sales
+FROM Sales_Fact f
+JOIN Time_Dim t ON f.TimeID = t.TimeID
+JOIN Location_Dim l ON f.LocationID = l.LocationID
+GROUP BY t.Year
+ORDER BY t.Year;
+
+
+
+
